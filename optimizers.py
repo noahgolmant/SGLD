@@ -100,7 +100,6 @@ class SGLD(Optimizer):
                     else:
                         d_p = buf
 
-                noise = np.sqrt(self.noise_scale) * torch.randn_like(p.data)
-                step = -group['lr'] * d_p + noise
-                p.data.add_(step)
+                p.data.add_(-group['lr'], d_p)
+                p.data.add_(np.sqrt(self.noise_scale), torch.randn_like(p.data))
         return loss
