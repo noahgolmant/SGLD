@@ -23,6 +23,9 @@ def make_args(parser):
                         help='burn-in period length')
     parser.add_argument('--end_epoch', default=200,
                         help='stop collecting samples after this epoch')
+    parser.add_argument('--noise_scale', default=1e-8,
+                        help='choose samples from trial trained with this'
+                             ' noise level')
 
 
 def load_trial(proj, start_epoch=160, end_epoch=200, noise_scale=0.0):
