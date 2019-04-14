@@ -1,3 +1,13 @@
+# Custom
+cifar10/
+data/
+logs/
+raydata/
+sgld_results/
+sgld_results.zip
+
+*.swp
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
