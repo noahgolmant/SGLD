@@ -7,7 +7,7 @@ import skeletor
 import torch
 import track
 
-from ensemble import Ensemble
+from .ensemble import Ensemble
 
 
 EXPERIMENTS = ['all', 'ensemble_size', 'entropy', 'ood', 'tsne', 'baseline']
@@ -26,6 +26,8 @@ def make_args(parser):
     parser.add_argument('--noise_scale', default=1e-8,
                         help='choose samples from trial trained with this'
                              ' noise level')
+    parser.add_argument('--results_dir', default='logs/',
+                        help='location of the track results for all trials')
 
 
 def load_trial(proj, start_epoch=160, end_epoch=200, noise_scale=0.0):
@@ -58,7 +60,7 @@ def main(args):
     loads the model and trial data and runs the specified experiment(s)!
     """
     # load the project from track
-    proj = track.Project(args.logroot)
+    proj = track.Project(args.results_dir)
 
     # create the ensemble
     model, trial_df = load_trial(proj, args.start_epoch, args.end_epoch,
