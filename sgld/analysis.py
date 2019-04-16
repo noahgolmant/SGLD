@@ -28,6 +28,18 @@ def make_args(parser):
                              ' noise level')
     parser.add_argument('--results_dir', default='logs/',
                         help='location of the track results for all trials')
+    parser.add_argument('--cuda', action='store_true',
+                        help='if true, use ur gpu')
+
+    """ ADD YOUR EXPERIMENT-SPECIFIC ARGUMENTS HERE """
+    # these will all be passed in as kwargs into your run function
+    # (see experiments/baseline.py for example)
+    parser.add_argument('--dataroot', default='./data',
+                        help='where cifar10 data is stored')
+    parser.add_argument('--batch_size', default=128,
+                        help='training batch size')
+    parser.add_argument('--eval_batch_size', default=100,
+                        help='test set  batch size (so it divided dataset len')
 
 
 def load_trial(proj, start_epoch=160, end_epoch=200, noise_scale=0.0):
@@ -71,7 +83,7 @@ def main(args):
         track.debug('Starting to run experiment: %s' % experiment)
         experiment_module = 'experiments.' + experiment
         runner = getattr(importlib.import_module(experiment_module), 'run')
-        runner(model, trial_df)
+        runner(model, trial_df, **vars(args))
 
     if args.mode == 'all':
         for experiment in EXPERIMENTS:

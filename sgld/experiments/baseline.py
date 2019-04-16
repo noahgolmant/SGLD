@@ -15,7 +15,8 @@ from ..utils import SoftmaxNLL
 
 
 def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
-        batch_size=128, eval_batch_size=100, cuda=False, num_workers=2):
+        batch_size=128, eval_batch_size=100, cuda=False, num_workers=2,
+        **unused):
     """
     this evaluates both the ensemble and the baseline model on the full
     test set

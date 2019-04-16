@@ -5,6 +5,6 @@ on out-of-distribution data (e.g. from another dataset)"
 import track
 
 
-def run(model, trial_df):
+def run(ensemble, trial_df, **kwargs):
     """ let's compute that confidence """
     pass
