@@ -34,9 +34,9 @@ def make_args(parser):
     """ ADD YOUR EXPERIMENT-SPECIFIC ARGUMENTS HERE """
     # these will all be passed in as kwargs into your run function
     # (see experiments/baseline.py for example)
-    parser.add_argument('--batch_size', default=128,
+    parser.add_argument('--batch_size', default=128, type=int,
                         help='training batch size')
-    parser.add_argument('--eval_batch_size', default=100,
+    parser.add_argument('--eval_batch_size', default=100, type=int,
                         help='test set  batch size (so it divided dataset len')
 
 
@@ -54,6 +54,8 @@ def load_trial(proj, start_epoch=160, end_epoch=200, noise_scale=0.0):
     if noise_scale == 0.0:
         model = torch.load(proj.fetch_artifact(trial_id, 'best.ckpt'),
                            map_location='cpu')
+        if isinstance(model, torch.nn.DataParallel):
+            model = model.module
         return model, trial_df
 
     # load all the models after burn-in period
@@ -62,6 +64,8 @@ def load_trial(proj, start_epoch=160, end_epoch=200, noise_scale=0.0):
         model = torch.load(proj.fetch_artifact(trial_id,
                                                'model%d.ckpt' % epoch),
                            map_location='cpu')
+        if isinstance(model, torch.nn.DataParallel):
+            model = model.module
         models.append(model)
     ensemble = Ensemble(models)
     return ensemble, trial_df
