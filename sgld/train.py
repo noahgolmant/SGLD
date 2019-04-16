@@ -101,7 +101,7 @@ def train(trainloader, model, criterion, optimizer, epoch, cuda=False,
     return (losses.avg, top1.avg)
 
 
-def test(testloader, model, criterion, epoch, cuda=False):
+def test(testloader, model, criterion, epoch, cuda=False, metric=True):
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -140,9 +140,10 @@ def test(testloader, model, criterion, epoch, cuda=False):
             progress_str = 'Loss: %.3f | Acc: %.3f%% (%d/%d)'\
                 % (losses.avg, top1.avg, top1.sum, top1.count)
             progress_bar(batch_idx, len(testloader), progress_str)
-    track.metric(iteration=0, epoch=epoch,
-                 avg_test_loss=losses.avg,
-                 avg_test_acc=top1.avg)
+    if metric:
+        track.metric(iteration=0, epoch=epoch,
+                     avg_test_loss=losses.avg,
+                     avg_test_acc=top1.avg)
     return (losses.avg, top1.avg)
 
 
