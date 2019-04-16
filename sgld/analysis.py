@@ -19,7 +19,7 @@ def make_args(parser):
                         choices=EXPERIMENTS,
                         help='which experiment analysis code to run!',
                         default='all')
-    parser.add_argument('--start_epoch', default=160,
+    parser.add_argument('--start_epoch', default=161,
                         help='burn-in period length')
     parser.add_argument('--end_epoch', default=200,
                         help='stop collecting samples after this epoch')
@@ -34,8 +34,6 @@ def make_args(parser):
     """ ADD YOUR EXPERIMENT-SPECIFIC ARGUMENTS HERE """
     # these will all be passed in as kwargs into your run function
     # (see experiments/baseline.py for example)
-    parser.add_argument('--dataroot', default='./data',
-                        help='where cifar10 data is stored')
     parser.add_argument('--batch_size', default=128,
                         help='training batch size')
     parser.add_argument('--eval_batch_size', default=100,
@@ -47,21 +45,23 @@ def load_trial(proj, start_epoch=160, end_epoch=200, noise_scale=0.0):
     returns the ensemble model and the dataframe of trial results
     """
     # find the right trial ID for this noise scale
-    proj = proj[proj['noise_scale'] == noise_scale]
-    assert len(proj) == 1, "we only want one sgld experiment for now"
-    trial_id = proj.ids['trial_id'].iloc[[0]]
-    trial_df = proj.results(trial_id)
+    proj_ids = proj.ids[proj.ids['noise_scale'] == noise_scale]
+    assert len(proj_ids) == 1, "we only want one sgld experiment for now"
+    trial_id = str(proj_ids['trial_id'].values[0])
+    trial_df = proj.results([trial_id])
 
     # just return a single model for the baseline case
     if noise_scale == 0.0:
-        model = torch.load(proj.fetch_artifact(trial_id[0], 'best.ckpt'))
+        model = torch.load(proj.fetch_artifact(trial_id, 'best.ckpt'),
+                           map_location='cpu')
         return model, trial_df
 
     # load all the models after burn-in period
     models = []
     for epoch in range(start_epoch, end_epoch):
-        model = torch.load(proj.fetch_artifact(trial_id[0],
-                                               'model%d.ckpt' % epoch))
+        model = torch.load(proj.fetch_artifact(trial_id,
+                                               'model%d.ckpt' % epoch),
+                           map_location='cpu')
         models.append(model)
     ensemble = Ensemble(models)
     return ensemble, trial_df
@@ -81,7 +81,7 @@ def main(args):
     # run the experiment
     def _run(experiment):
         track.debug('Starting to run experiment: %s' % experiment)
-        experiment_module = 'experiments.' + experiment
+        experiment_module = 'sgld.experiments.' + experiment
         runner = getattr(importlib.import_module(experiment_module), 'run')
         runner(model, trial_df, **vars(args))
 

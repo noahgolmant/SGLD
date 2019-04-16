@@ -11,7 +11,7 @@ from skeletor.datasets import build_dataset, num_classes
 from skeletor.models import build_model
 from skeletor.utils import AverageMeter, accuracy, progress_bar
 
-from optimizers import SGLD
+from .optimizers import SGLD
 
 
 def add_train_args(parser):

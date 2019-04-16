@@ -9,9 +9,10 @@ dashed horizontal lines for: baseline max test acc, ensemble max test acc
 from skeletor.datasets import build_dataset
 import torch
 import track
-from ..analysis import load_trial
-from ..train import test  # the evaluate function
-from ..utils import SoftmaxNLL
+
+from sgld.analysis import load_trial
+from sgld.train import test  # the evaluate function
+from sgld.utils import SoftmaxNLL
 
 
 def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
