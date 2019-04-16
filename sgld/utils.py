@@ -4,6 +4,27 @@ from skeletor.datasets import build_dataset
 import torch
 
 
+class SoftmaxNLL(torch.nn.Module):
+    """
+    use this criterion to test the ensemble model since its output is
+    a softmax already (normally, CrossEntropyLoss takes logits)
+
+
+    overall:
+    ----
+    SoftmaxNLL takes softmax
+    NLL takes log-softmax
+    CrossEntropy takes logits
+    """
+    def __init__(self, **kwargs):
+        super(SoftmaxNLL, self).__init__()
+        self.nll = torch.nn.NLLLoss()
+
+    def forward(self, inputs, labels):
+        log_probs = torch.log(inputs)
+        return self.nll(log_probs, labels)
+
+
 def entropy(predictions):
     """ compute shannon entropy of the categorical prediction """
     predictions = predictions / torch.sum(predictions, dim=1)
@@ -40,6 +61,15 @@ def build_single_class_dataset(name, class_ind=0, **dataset_params):
     return _filter(trainloader, mode='train'), _filter(testloader, mode='test')
 
 
+def _test_softmax_nll():
+    x = torch.from_numpy(np.array([[1., 0.]]))
+    y0 = torch.from_numpy(np.array([0]))
+    y1 = torch.from_numpy(np.array([1]))
+    criterion = SoftmaxNLL()
+    assert criterion(x, y0).numpy() == 0
+    assert criterion(x, y1).numpy() == float("inf")
+
+
 def _test_shannon_entropy():
     x = np.array([[.5, .5]])
     x = torch.from_numpy(x)
@@ -64,5 +94,6 @@ def _test_filter_dataset():
 
 
 if __name__ == '__main__':
+    _test_softmax_nll()
     _test_shannon_entropy()
     _test_filter_dataset()
