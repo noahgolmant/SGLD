@@ -52,23 +52,3 @@ def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
 
        track.metric(ensemble_size=ensemble_size, ensemble_loss=ensemble_loss,
                     ensemble_acc=ensemble_acc, ensemble_acc_var=ensemble_acc_var )
-
-
-    # now, test each of the ensemble's models
-    model_losses = []
-    model_accs = []
-    for model in ensemble.models:
-        model_loss, model_acc = test(testloader, model,
-                                     baseline_criterion,
-                                     epoch=-1, cuda=cuda, metric=False)
-        model_losses.append(model_loss)
-        model_accs.append(model_acc)
-
-        model_acc_var = np.var(np.array(model_accs))
-
-        track.metric(ensemble_size=len(model_accs),
-                     model_acc_var=model_acc_var)
-
-
-    # we just need to track the scalar results of this evaluation
-    # we can access the baseline test *curve* from the jupyter notebook (later)
