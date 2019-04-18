@@ -13,6 +13,7 @@ import torch
 from sgld.analysis import load_trial
 from sgld.train import test  # the evaluate function
 from sgld.utils import SoftmaxNLL
+from sgld.utils import entropy
 
 
 def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
@@ -21,6 +22,10 @@ def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
 
     trainloader, testloader = build_dataset('cifar10',
                                             dataroot=dataroot,
+                                            batch_size=batch_size,
+                                            eval_batch_size=eval_batch_size,
+                                            num_workers=2)
+    class_trainlaoder, class_testloader = build_dataset('cifar10', dataroot=dataroot,
                                             batch_size=batch_size,
                                             eval_batch_size=eval_batch_size,
                                             num_workers=2)
@@ -47,8 +52,32 @@ def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
                                      epoch=-1, cuda=cuda, metric=False)
         model_accs.append(model_acc)
 
+
         ensemble_acc_var = np.var(np.array(model_acc))
 
 
+        # Get predictions for single class dataset
+        ensemble_trial.eval()
+        batch_sum = None
+        batches = 0
+
+        for batch_idx, (inputs, targets) in enumerate(testloader):
+            #TODO: Check with noah if I need to do this
+            if cuda:
+                inputs, targets = inputs.cuda(), targets.cuda()
+            inputs = torch.autograd.Variable(inputs, volatile=True)
+            outputs = model(inputs)
+            if batch_sum == None:
+                batch_sum = outputs
+            else:
+                batch_sum += outputs
+            batches += 1
+
+        pred = batch_sum / batches
+
+        pred_entropy = entropy(pred)
+
+
        track.metric(ensemble_size=ensemble_size, ensemble_loss=ensemble_loss,
-                    ensemble_acc=ensemble_acc, ensemble_acc_var=ensemble_acc_var )
+                    ensemble_acc=ensemble_acc, ensemble_acc_var=ensemble_acc_var,
+                    ensemble_entropy=pred_entropy )
