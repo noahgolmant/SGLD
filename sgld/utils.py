@@ -25,13 +25,20 @@ class SoftmaxNLL(torch.nn.Module):
         return self.nll(log_probs, labels)
 
 
-def entropy(predictions):
-    """ compute shannon entropy of the categorical prediction """
-    predictions = predictions / torch.sum(predictions, dim=1)
-    log_probs = torch.log(predictions)
-    # prevent nans with p(x) = 0
-    log_probs[log_probs == float("-Inf")] = 0.0
-    return -torch.sum(predictions * log_probs / np.log(2), dim=1)
+class Entropy(torch.nn.Module):
+    """
+    use this criterion to evaluate the average shannon entropy of predictions
+    on a batch. each input is a batch of softmaxed model outputs
+    """
+    def __init__(self, **kwargs):
+        super(Entropy, self).__init__()
+
+    def forward(self, inputs):
+        inputs = inputs / torch.sum(inputs, dim=1)
+        log_probs = torch.log(inputs)
+        # prevent nans with p(x) = 0
+        log_probs[log_probs == float("-Inf")] = 0.0
+        return -torch.sum(inputs * log_probs / np.log(2), dim=1)
 
 
 def build_single_class_dataset(name, class_ind=0, **dataset_params):
@@ -71,6 +78,7 @@ def _test_softmax_nll():
 
 
 def _test_shannon_entropy():
+    entropy = Entropy()
     x = np.array([[.5, .5]])
     x = torch.from_numpy(x)
     assert entropy(x).item() == 1.
