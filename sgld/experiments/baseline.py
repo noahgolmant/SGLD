@@ -15,7 +15,7 @@ from sgld.train import test  # the evaluate function
 from sgld.utils import SoftmaxNLL
 
 
-def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
+def run(ensemble, proj_df, results_dir='./logs', dataroot='./data',
         batch_size=128, eval_batch_size=100, cuda=False, num_workers=2,
         **unused):
     """
@@ -32,6 +32,7 @@ def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
                                             eval_batch_size=eval_batch_size,
                                             num_workers=2)
     ensemble_criterion = SoftmaxNLL()
+    track.debug("[baseline] testing the ensemble on full dataset")
     ensemble_loss, ensemble_acc = test(testloader, ensemble,
                                        ensemble_criterion, epoch=-1,
                                        cuda=cuda, metric=False)
@@ -40,6 +41,7 @@ def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
     proj = track.Project(results_dir)
     best_model, best_df = load_trial(proj, noise_scale=0.0)
 
+    track.debug("[baseline] testing no-noise baseline model on full dataset")
     baseline_criterion = torch.nn.CrossEntropyLoss()
     baseline_loss, baseline_acc = test(testloader, best_model,
                                        baseline_criterion,
@@ -48,7 +50,10 @@ def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
     # now, test each of the ensemble's models
     model_losses = []
     model_accs = []
-    for model in ensemble.models:
+    track.debug("[baseline] testing individual models on full dataset")
+    for i, model in enumerate(ensemble.models):
+        track.debug("[baseline] testing model %d of %d" %
+                    (i, len(ensemble.models)))
         model_loss, model_acc = test(testloader, model,
                                      baseline_criterion,
                                      epoch=-1, cuda=cuda, metric=False)

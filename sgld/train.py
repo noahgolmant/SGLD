@@ -129,15 +129,13 @@ def test(testloader, model, criterion, epoch, cuda=False, metric=True,
 
             if cuda:
                 inputs, targets = inputs.cuda(), targets.cuda()
-            inputs = torch.autograd.Variable(inputs, volatile=True)
-            targets = torch.autograd.Variable(targets, volatile=True)
-
-            # compute output
-            outputs = model(inputs)
-            if criterion_has_labels:
-                loss = criterion(outputs, targets)
-            else:
-                loss = criterion(outputs)
+            with torch.no_grad():
+                # compute output
+                outputs = model(inputs)
+                if criterion_has_labels:
+                    loss = criterion(outputs, targets)
+                else:
+                    loss = criterion(outputs)
 
             # measure accuracy and record loss
             losses.update(loss.item(), inputs.size(0))
