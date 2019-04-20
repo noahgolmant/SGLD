@@ -63,7 +63,7 @@ def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
         # (a) on the whole dataset
         #      (i) for the ensemble
         #      (ii)for the single model from this epoch
-        # (b) on the whole dataset
+        # (b) on a single class
         #      (i) for the ensemble
         #      (ii)for the single model from this epoch
         stats = {}
