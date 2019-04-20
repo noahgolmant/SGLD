@@ -5,6 +5,6 @@ with one blob for each model in the ensemble
 import track
 
 
-def run(ensemble, model, trial_df, **kwargs):
+def run(ensemble, model, proj_df, **kwargs):
     """ let's do some dimensionality reduction """
     pass

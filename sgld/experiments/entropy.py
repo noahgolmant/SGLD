@@ -5,6 +5,6 @@ classes in same dataset
 import track
 
 
-def run(ensemble, trial_df, **kwargs):
+def run(ensemble, proj_df, **kwargs):
     """ let's compute that entropy baby """
     pass

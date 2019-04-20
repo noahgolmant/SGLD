@@ -45,10 +45,10 @@ def load_trial(proj, start_epoch=160, end_epoch=200, noise_scale=0.0):
     returns the ensemble model and the dataframe of trial results
     """
     # find the right trial ID for this noise scale
-    proj_ids = proj.ids[proj.ids['noise_scale'] == noise_scale]
+    proj_ids = proj.ids[proj.ids['noise_scale'] == noise_scale]['trial_id']
     assert len(proj_ids) == 1, "we only want one sgld experiment for now"
-    trial_id = str(proj_ids['trial_id'].values[0])
-    trial_df = proj.results([trial_id])
+    trial_id = str(proj_ids.values[0])
+    proj_df = proj.results([trial_id])
 
     # just return a single model for the baseline case
     if noise_scale == 0.0:
@@ -56,7 +56,7 @@ def load_trial(proj, start_epoch=160, end_epoch=200, noise_scale=0.0):
                            map_location='cpu')
         if isinstance(model, torch.nn.DataParallel):
             model = model.module
-        return model, trial_df
+        return model, proj_df
 
     # load all the models after burn-in period
     models = []
@@ -68,7 +68,7 @@ def load_trial(proj, start_epoch=160, end_epoch=200, noise_scale=0.0):
             model = model.module
         models.append(model)
     ensemble = Ensemble(models)
-    return ensemble, trial_df
+    return ensemble, proj_df
 
 
 def main(args):

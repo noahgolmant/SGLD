@@ -2,6 +2,6 @@
 import track
 
 
-def run(ensemble, trial_df, **kwargs):
+def run(ensemble, proj_df, **kwargs):
     """ look at more and more models ??? """
     pass

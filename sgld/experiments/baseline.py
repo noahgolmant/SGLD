@@ -15,7 +15,7 @@ from sgld.train import test  # the evaluate function
 from sgld.utils import SoftmaxNLL
 
 
-def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
+def run(ensemble, proj_df, results_dir='./logs', dataroot='./data',
         batch_size=128, eval_batch_size=100, cuda=False, num_workers=2,
         **unused):
     """
