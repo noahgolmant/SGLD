@@ -34,11 +34,10 @@ class Entropy(torch.nn.Module):
         super(Entropy, self).__init__()
 
     def forward(self, inputs):
-        inputs = inputs / torch.sum(inputs, dim=1)
         log_probs = torch.log(inputs)
         # prevent nans with p(x) = 0
         log_probs[log_probs == float("-Inf")] = 0.0
-        return -torch.sum(inputs * log_probs / np.log(2), dim=1)
+        return -torch.sum(inputs * log_probs / np.log(2), dim=1).mean()
 
 
 def build_single_class_dataset(name, class_ind=0, **dataset_params):

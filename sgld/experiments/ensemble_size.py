@@ -35,6 +35,7 @@ def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
         eval_batch_size=eval_batch_size,
         num_workers=2)
 
+    full_ensemble = ensemble
     for i in range(len(ensemble.models) - 1, -1, -1):
         ensemble_size = len(ensemble.models) - i
         ensemble_loss = SoftmaxNLL()
@@ -42,8 +43,8 @@ def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
 
         entropy_criterion = Entropy()
 
-        ensemble = Ensemble(ensemble.models[i:])
-        single_model = ensemble.models[i]
+        ensemble = Ensemble(full_ensemble.models[i:])
+        single_model = full_ensemble.models[i]
 
         # we want to do metrics for (a) the ensemble with varying sizes and
         #   (b) the individual models corresponding to that epoch
@@ -66,12 +67,15 @@ def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
         #      (i) for the ensemble
         #      (ii)for the single model from this epoch
         stats = {}
-        models = ensemble, single_model
-        loaders = testloader, class_testloader
+        models = (ensemble, single_model)
+        loaders = (testloader, class_testloader)
         losses = ensemble_loss, one_loss
         model_names = ['ensemble', 'single_model']
         loader_names = ['full', 'single_class']
-        for i, j in itertools.product([range(len(models)), range(len(loaders))]):
+        for i, j in itertools.product(range(len(models)), range(len(loaders))):
+            track.debug("[ensemble size: %d] Evaluating loss/acc/entropy for"
+                        "%s on %s dataset" %
+                        (ensemble_size, model_names[i], loader_names[i]))
             metric = model_names[i] + '_' + loader_names[i]
             loss, acc, entropy = _test_dataset(models[i], loaders[j], losses[i])
             stats[metric + '_loss'] = loss
