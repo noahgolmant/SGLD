@@ -101,7 +101,17 @@ def train(trainloader, model, criterion, optimizer, epoch, cuda=False,
     return (losses.avg, top1.avg)
 
 
-def test(testloader, model, criterion, epoch, cuda=False, metric=True):
+def test(testloader, model, criterion, epoch, cuda=False, metric=True,
+         criterion_has_labels=True,
+         compute_acc=True):
+    """
+    criterion = torch.nn.Loss instance.
+    criterion_has_labels (bool): if true, the above criterion is called as
+        criterion(outputs, labels). otherwise, just criterion(outputs).
+
+    returns (test_loss, test_acc) if compute_acc is True
+    otherwise, returns test_loss alone
+    """
     batch_time = AverageMeter()
     data_time = AverageMeter()
     losses = AverageMeter()
@@ -124,27 +134,39 @@ def test(testloader, model, criterion, epoch, cuda=False, metric=True):
 
             # compute output
             outputs = model(inputs)
-            loss = criterion(outputs, targets)
+            if criterion_has_labels:
+                loss = criterion(outputs, targets)
+            else:
+                loss = criterion(outputs)
 
             # measure accuracy and record loss
-            prec1, prec5 = accuracy(outputs.data, targets.data, topk=(1, 5))
             losses.update(loss.item(), inputs.size(0))
-            top1.update(prec1.item(), inputs.size(0))
-            top5.update(prec5.item(), inputs.size(0))
+            if compute_acc:
+                prec1, prec5 = accuracy(outputs.data, targets.data, topk=(1, 5))
+                top1.update(prec1.item(), inputs.size(0))
+                top5.update(prec5.item(), inputs.size(0))
 
             # measure elapsed time
             batch_time.update(time.time() - end)
             end = time.time()
 
             # plot progress
-            progress_str = 'Loss: %.3f | Acc: %.3f%% (%d/%d)'\
-                % (losses.avg, top1.avg, top1.sum, top1.count)
+            if compute_acc:
+                progress_str = 'Loss: %.3f | Acc: %.3f%% (%d/%d)'\
+                    % (losses.avg, top1.avg, top1.sum, top1.count)
+            else:
+                progress_str = 'Loss: %.3f (%d/%d)'\
+                    % (losses.avg, batch_idx*inputs.size(0), losses.count)
+
             progress_bar(batch_idx, len(testloader), progress_str)
     if metric:
         track.metric(iteration=0, epoch=epoch,
                      avg_test_loss=losses.avg,
                      avg_test_acc=top1.avg)
-    return (losses.avg, top1.avg)
+    if compute_acc:
+        return (losses.avg, top1.avg)
+    else:
+        return losses.avg
 
 
 def do_training(args):

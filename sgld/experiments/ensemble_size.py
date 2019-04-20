@@ -6,78 +6,75 @@ size of the ensemble.
 3) We explore how the entropy of a predicted class varies as a function of the size
 of the ensemble.    """
 
-import track
+import itertools
 from skeletor.datasets import build_dataset
-import torch
+from torch.nn import CrossEntropyLoss
+import track
 
-from sgld.analysis import load_trial
 from sgld.train import test  # the evaluate function
-from sgld.utils import SoftmaxNLL
-from sgld.utils import entropy
+from sgld.utils import SoftmaxNLL, Entropy, build_single_class_dataset
+from sgld.ensemble import Ensemble
 
 
 def run(ensemble, trial_df, results_dir='./logs', dataroot='./data',
-        batch_size=128, eval_batch_size=100, cuda=False, num_workers=2,
-        start_epoch=160, end_epoch=200, **unused):
+        class_ind=0, batch_size=128, eval_batch_size=100, cuda=False,
+        num_workers=2, start_epoch=160, end_epoch=200, **unused):
 
     trainloader, testloader = build_dataset('cifar10',
                                             dataroot=dataroot,
                                             batch_size=batch_size,
                                             eval_batch_size=eval_batch_size,
                                             num_workers=2)
-    class_trainlaoder, class_testloader = build_dataset('cifar10', dataroot=dataroot,
-                                            batch_size=batch_size,
-                                            eval_batch_size=eval_batch_size,
-                                            num_workers=2)
 
-    trial_start_epoch = end_epoch;
-    model_accs = []
+    # this will only iterate over examples of one class
+    class_trainlaoder, class_testloader = build_single_class_dataset(
+        'cifar10',
+        class_ind=class_ind,
+        dataroot=dataroot,
+        batch_size=batch_size,
+        eval_batch_size=eval_batch_size,
+        num_workers=2)
 
-    for i in range(len(enseble.models) - 1, -1, -1):
-        #Get ensemble model where size = end_epoch - trial_start_epoch
-        ensemble_size = len(enseble.models) - i
-        ensemble_trial = Ensemble(ensemble_models[i:])
+    for i in range(len(ensemble.models) - 1, -1, -1):
+        ensemble_size = len(ensemble.models) - i
+        ensemble_loss = SoftmaxNLL()
+        one_loss = CrossEntropyLoss()
 
-        ensemble_criterion = SoftmaxNLL()
-        ensemble_loss, ensemble_acc = test(testloader, ensemble_trial,
-                                           ensemble_criterion, epoch=-1,
-                                           cuda=cuda, metric=False)
+        entropy_criterion = Entropy()
 
-        # Since we are iteratively increasing our ensemble size by one, we can
-        # exlusively look at the model being added to add to our list of
-        # model accuracies
-        model = ensemble.models[i]
-        model_loss, model_acc = test(testloader, model,
-                                     baseline_criterion,
-                                     epoch=-1, cuda=cuda, metric=False)
-        model_accs.append(model_acc)
+        ensemble = Ensemble(ensemble.models[i:])
+        single_model = ensemble.models[i]
 
-
-        ensemble_acc_var = np.var(np.array(model_acc))
-
-
-        # Get predictions for single class dataset
-        ensemble_trial.eval()
-        batch_sum = None
-        batches = 0
-
-        for batch_idx, (inputs, targets) in enumerate(testloader):
-            #TODO: Check with noah if I need to do this
-            if cuda:
-                inputs, targets = inputs.cuda(), targets.cuda()
-            inputs = torch.autograd.Variable(inputs, volatile=True)
-            outputs = model(inputs)
-            if batch_sum == None:
-                batch_sum = outputs
-            else:
-                batch_sum += outputs
-            batches += 1
-
-        pred = batch_sum / batches
-
-        pred_entropy = entropy(pred)
-
-
-       track.metric(ensemble_size=ensemble_size, ensemble_loss=ensemble_loss,
-                    ensemble_acc=ensemble_acc, ensemble_acc_var=ensemble_acc_var,
-                    ensemble_entropy=pred_entropy )
+        # we want to do metrics for (a) the ensemble with varying sizes and
+        #   (b) the individual models corresponding to that epoch
+        def _test_dataset(model, testloader, criterion):
+            loss, acc = test(testloader, model,
+                             criterion, epoch=-1,
+                             cuda=cuda, metric=False)
+            # compute the entropy of the model post-hoc as well
+            entropy = test(testloader, model,
+                           entropy_criterion, epoch=-1,
+                           cuda=cuda, metric=False,
+                           criterion_has_labels=False,
+                           compute_acc=False)
+            return loss, acc, entropy
+        # metrics for the both models over both datasets
+        # (a) on the whole dataset
+        #      (i) for the ensemble
+        #      (ii)for the single model from this epoch
+        # (b) on the whole dataset
+        #      (i) for the ensemble
+        #      (ii)for the single model from this epoch
+        stats = {}
+        models = ensemble, single_model
+        loaders = testloader, class_testloader
+        losses = ensemble_loss, one_loss
+        model_names = ['ensemble', 'single_model']
+        loader_names = ['full', 'single_class']
+        for i, j in itertools.product([range(len(models)), range(len(loaders))]):
+            metric = model_names[i] + '_' + loader_names[i]
+            loss, acc, entropy = _test_dataset(models[i], loaders[j], losses[i])
+            stats[metric + '_loss'] = loss
+            stats[metric + '_acc'] = acc
+            stats[metric + '_entropy'] = entropy
+        track.metric(ensemble_size=ensemble_size, **stats)
