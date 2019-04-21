@@ -9,7 +9,7 @@ def run(ensemble, proj_df, dataroot='./data', batch_size=128, eval_batch_size=10
     cuda=False, num_workers=2, **unused):
     """ let's compute that entropy baby """
 
-    num_classes = build_dataset('cifar10')
+    num_classes = build_dataset('mnist')
     entropy_criterion = Entropy()
 
     # iterate for all possible classes in dataset
