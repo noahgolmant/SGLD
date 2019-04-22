@@ -3,11 +3,12 @@ Main file to orchestrate experiment analysis functionsso that we can plot it
 later (probably in jupyter)
 """
 import importlib
-import skeletor
+import skeletor as sk
 import torch
 import track
 
 from .ensemble import Ensemble
+from .utils import svhn
 
 
 EXPERIMENTS = ['all', 'ensemble_size', 'entropy', 'ood', 'tsne', 'baseline']
@@ -82,6 +83,9 @@ def main(args):
     model, trial_df = load_trial(proj, args.start_epoch, args.end_epoch,
                                  args.noise_scale)
 
+    # register svhn so we can load it in OOD
+    sk.datasets.add_dataset(svhn)
+
     # run the experiment
     def _run(experiment):
         track.debug('Starting to run experiment: %s' % experiment)
@@ -97,5 +101,5 @@ def main(args):
 
 
 if __name__ == '__main__':
-    skeletor.supply_args(make_args)
-    skeletor.execute(main)
+    sk.supply_args(make_args)
+    sk.execute(main)
