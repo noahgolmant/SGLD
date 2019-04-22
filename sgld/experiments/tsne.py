@@ -12,7 +12,7 @@ import torch
 import track
 
 from sgld.topicsne.tsne import TSNE
-from sgld.topicsne.wrapper import Wrapper, chunks
+from sgld.topicsne.wrapper import Wrapper
 from sgld.utils import build_single_class_dataset
 
 
@@ -84,7 +84,7 @@ def run(ensemble, proj_df, dataroot='./data',
     labels = []
 
     track.debug("[tsne] starting forward passes")
-    ensemble.models = ensemble.models[0::8]
+    ensemble.models = ensemble.models[0::4]  # plot every 4 epochs for now
     for model_ind, model in enumerate(ensemble.models):
         # plot progress
         progress_bar(model_ind, len(ensemble.models))
