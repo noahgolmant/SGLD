@@ -6,14 +6,13 @@ from itertools import islice
 import matplotlib.pyplot as plt
 import numpy as np
 from skeletor.utils import progress_bar
-from skeletor.datasets import build_dataset
 from sklearn import manifold
 from scipy.spatial.distance import squareform
 import torch
 import track
 
 from sgld.topicsne.tsne import TSNE
-from sgld.topicsne.wrapper import Wrapper
+from sgld.topicsne.wrapper import Wrapper, chunks
 from sgld.utils import build_single_class_dataset
 
 
@@ -82,11 +81,10 @@ def run(ensemble, proj_df, dataroot='./data',
 
     # stores for any loader; we have to copy these to the last two dicts
     train_activations = {}
-    test_activations = {}
     labels = []
 
     track.debug("[tsne] starting forward passes")
-    ensemble.models = ensemble.models[0::4]
+    ensemble.models = ensemble.models[0::8]
     for model_ind, model in enumerate(ensemble.models):
         # plot progress
         progress_bar(model_ind, len(ensemble.models))
@@ -95,14 +93,10 @@ def run(ensemble, proj_df, dataroot='./data',
         model.linear.register_forward_pre_hook(
             _create_preactivation_hook(model_activations))
 
-        def _store_preactivations(loader):
-            # each call will append to `model_activations`
-            with torch.no_grad():
-                for inputs, _ in islice(loader, 0, num_batches):
-                    model(inputs)
-            return torch.cat(model_activations)
-        train_activations[model_ind] = _store_preactivations(trainloader)
-        # test_activations[model_ind] = _store_preactivations(testloader)
+        with torch.no_grad():
+            for inputs, _ in islice(trainloader, 0, num_batches):
+                model(inputs)
+        train_activations[model_ind] = torch.cat(model_activations)
         labels.extend([model_ind] * len(train_activations[model_ind]))
 
     # now, we have all activations for all models! we can do tsne
@@ -117,7 +111,25 @@ def run(ensemble, proj_df, dataroot='./data',
     f = plt.figure()
     # create labels for the models by iteration
     y = np.array(labels)
+
     plt.scatter(embedding[:, 0], embedding[:, 1], c=y * 1.0 / y.max())
+    # plot the model means too
+    model_means = []
+    num_model_vecs = len(list(train_activations.values())[0])
+
+    endpoints = []
+    start = 0
+    for stop in range(0, len(embedding), num_model_vecs):
+        if stop - start > 0:
+            endpoints.append((start, stop))
+            start = stop
+    for start, stop in endpoints:
+        model_means.append(embedding[start:stop, :].mean(axis=0))
+    model_means = np.array(model_means)
+    ys = np.array(list(range(len(model_means)))) / float(len(model_means))
+    plt.scatter(model_means[:, 0], model_means[:, 1], c=ys, s=100,
+                linewidth=2, edgecolors='black', marker='D')
+
     plt.axis('off')
     plt.savefig('/Users/noah/Dev/SGLD/embeddings.png', bbox_inches='tight')
     plt.close(f)
