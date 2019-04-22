@@ -5,3 +5,4 @@ from . import utils
 from . import optimizers
 from . import ensemble
 from . import experiments
+from . import topicsne
