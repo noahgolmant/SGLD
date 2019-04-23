@@ -9,14 +9,16 @@ def run(ensemble, proj_df, dataroot='./data', batch_size=128, eval_batch_size=10
     cuda=False, num_workers=2, **unused):
     """ let's compute that entropy baby """
 
-    num_classes = build_dataset('mnist')
+    #TODO: figure out how/if we want to change dataset name to param or manually
+    # do this
+    num_classes = build_dataset('svhn')
     entropy_criterion = Entropy()
 
     # iterate for all possible classes in dataset
     for class_id in range(num_classes):
         # build dataset per class
         class_trainlaoder, class_testloader = build_single_class_dataset(
-            'mnist',
+            'svhn',
             class_ind=class_ind,
             dataroot=dataroot,
             batch_size=batch_size,
@@ -32,4 +34,4 @@ def run(ensemble, proj_df, dataroot='./data', batch_size=128, eval_batch_size=10
         track.debug("Evaluating entropy for class id: %d" %
                     (class_id))
 
-        track.metric(mnist_class_id=class_id, entropy=entropy)
+        track.metric(svnh_class_id=class_id, entropy=entropy)
