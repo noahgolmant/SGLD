@@ -7,6 +7,10 @@ sgld_results/
 sgld_results.zip
 
 *.swp
+.DS*
+*.jpg
+*.png
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

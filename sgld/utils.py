@@ -2,7 +2,7 @@
 import numpy as np
 from skeletor.datasets import build_dataset
 import torch
-import torch.utils.data as data
+import torch.utils.data
 import torchvision
 import torchvision.transforms as T
 
@@ -51,15 +51,18 @@ def build_single_class_dataset(name, class_ind=0, **dataset_params):
 
     I'm just going to overwrite standard cifar loading data for now
     """
-    assert name == 'cifar10', "we only have this one for now lol"
     trainloader, testloader = build_dataset(name, **dataset_params)
 
     def _filter(loader, mode='train'):
         dataset = loader.dataset
-        data_attr = mode + '_data'  # e.g. train imgs in dataset.train_data
-        label_attr = mode + '_labels'
-        assert hasattr(dataset, data_attr) and hasattr(dataset, label_attr),\
-            "cifar10 dataset obj has data array"
+        assert name in ['cifar10', 'svhn'],\
+            'we only support cifar and svhn right now'
+        if name == 'cifar10':
+            data_attr = mode + '_data'  # e.g. train imgs in dataset.train_data
+            label_attr = mode + '_labels'
+        else:
+            data_attr = 'data'
+            label_attr = 'labels'
         data = getattr(dataset, data_attr)
         targets = np.array(getattr(dataset, label_attr))
         class_inds = np.where(targets == int(class_ind))
@@ -70,36 +73,6 @@ def build_single_class_dataset(name, class_ind=0, **dataset_params):
     return _filter(trainloader, mode='train'), _filter(testloader, mode='test')
 
 
-class SVHNFusion(data.Dataset):
-    def __init__(self, dataroot):
-        transform = T.Compose([
-            T.ToTensor(),
-            T.Normalize((.5, .5, .5), (.5, .5, .5))
-        ])
-
-        self.train = torchvision.datasets.SVHN(
-            root=dataroot,
-            split='train',
-            download=True,
-            transform=transform)
-        self.extra = torchvision.datasets.SVHN(
-            root=dataroot,
-            split='extra',
-            download=True,
-            transform=transform)
-        self.n_train = len(self.train)
-        self.n_extra = len(self.extra)
-
-    def __getitem__(self, index):
-        if index < self.n_train:
-            return self.train[index]
-        else:
-            return self.extra[index - self.n_train]
-
-    def __len__(self):
-        return self.n_train + self.n_extra
-
-
 def svhn(batch_size, eval_batch_size, dataroot, num_workers=2):
     """" train, test, num_classes for svhn house digits classification """
     transform = T.Compose([
@@ -107,18 +80,22 @@ def svhn(batch_size, eval_batch_size, dataroot, num_workers=2):
         T.Normalize((.5, .5, .5), (.5, .5, .5))
     ])
 
-    trainset = SVHNFusion(dataroot)
+    trainset = torchvision.datasets.SVHN(
+                    root=dataroot,
+                    split='train',
+                    download=True,
+                    transform=transform)
     testset = torchvision.datasets.SVHN(
         root=dataroot,
         split='test',
         download=True,
         transform=transform)
 
-    trainloader = torchvision.data.DataLoader(trainset,
+    trainloader = torch.utils.data.DataLoader(trainset,
                                               batch_size=batch_size,
                                               shuffle=True,
                                               num_workers=num_workers)
-    testloader = torchvision.data.DataLoader(testset,
+    testloader = torch.utils.data.DataLoader(testset,
                                              batch_size=eval_batch_size,
                                              shuffle=True,
                                              num_workers=num_workers)
