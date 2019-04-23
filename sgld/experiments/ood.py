@@ -13,9 +13,9 @@ def run(ensemble, proj_df, dataroot='./data', batch_size=128,
     """ let's compute that entropy baby """
     num_classes = 10  # build_dataset('cifar10') <- not worth computing rn
     entropy_criterion = Entropy()
+    ensemble.models = ensemble.models[::4]
 
     # iterate for all possible classes in dataset
-    ensemble.models = ensemble.models[::10]
     for class_ind in range(num_classes):
         # build dataset per class
         track.debug("Evaluating entropy for class id: %d" %
