@@ -126,7 +126,6 @@ def test(testloader, model, criterion, epoch, cuda=False, metric=True,
         for batch_idx, (inputs, targets) in enumerate(testloader):
             # measure data loading time
             data_time.update(time.time() - end)
-
             if cuda:
                 inputs, targets = inputs.cuda(), targets.cuda()
             with torch.no_grad():

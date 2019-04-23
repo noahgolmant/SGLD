@@ -4,19 +4,22 @@ on out-of-distribution data (e.g. from another dataset)"
 """
 import track
 
+from sgld.train import test
+from sgld.utils import Entropy, build_single_class_dataset
 
-def run(ensemble, proj_df, dataroot='./data', batch_size=128, eval_batch_size=100,
-    cuda=False, num_workers=2, **unused):
+
+def run(ensemble, proj_df, dataroot='./data', batch_size=128,
+        eval_batch_size=100, cuda=False, num_workers=2, **unused):
     """ let's compute that entropy baby """
-
-    #TODO: figure out how/if we want to change dataset name to param or manually
-    # do this
-    num_classes = build_dataset('svhn')
+    num_classes = 10  # build_dataset('cifar10') <- not worth computing rn
     entropy_criterion = Entropy()
 
     # iterate for all possible classes in dataset
-    for class_id in range(num_classes):
+    ensemble.models = ensemble.models[::10]
+    for class_ind in range(num_classes):
         # build dataset per class
+        track.debug("Evaluating entropy for class id: %d" %
+                    (class_ind))
         class_trainlaoder, class_testloader = build_single_class_dataset(
             'svhn',
             class_ind=class_ind,
@@ -31,7 +34,5 @@ def run(ensemble, proj_df, dataroot='./data', batch_size=128, eval_batch_size=10
                        cuda=cuda, metric=False,
                        criterion_has_labels=False,
                        compute_acc=False)
-        track.debug("Evaluating entropy for class id: %d" %
-                    (class_id))
-
-        track.metric(svnh_class_id=class_id, entropy=entropy)
+        track.debug("\n\n\tEntropy: %.2f" % entropy)
+        track.metric(svnh_class_id=class_ind, entropy=entropy)
