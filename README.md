@@ -21,3 +21,7 @@ Here is a cool visualization:
 ![tsne](notebooks/embeddings.png)
 
 Each dot is a two-dimensional projection of the pre-activations for the final linear layer of the network. We project all the points from a single class using this technique, and repeat it for each model in the ensemble. Lighter color (from purple to yellow) indicates a model obtained later in training. The diamonds represent the class centroids for each model.
+
+# Acknowledgements
+
+The PyTorch t-SNE code is a modification of Chris Moody's implementation [here](https://github.com/cemoody/topicsne/).
