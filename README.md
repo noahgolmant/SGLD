@@ -2,7 +2,7 @@
 
 This was a final project for Berkeley's [EE126](http://inst.eecs.berkeley.edu/~ee126/sp19/) class in Spring 2019: [__Final Project Writeup__](EECS126_Final_Project_SGLD.pdf)
 
-This respository contains code to reproduce and analyze the results of the paper ["Bayesian Learning via Stochastic Gradient Langevin Dynamics"](https://www.ics.uci.edu/~welling/publications/papers/stoclangevin_v6.pdf). We evaluated the performance of SGLD as an ensembling technique, performed visualizations of the class activations for the model samples from the posterior, and estimated the model uncertainty by measuring the Shannon entropy of the model predictions in different setups.
+This repository contains code to reproduce and analyze the results of the paper ["Bayesian Learning via Stochastic Gradient Langevin Dynamics"](https://www.ics.uci.edu/~welling/publications/papers/stoclangevin_v6.pdf). We evaluated the performance of SGLD as an ensembling technique, performed visualizations of the class activations for the model samples from the posterior, and estimated the model uncertainty by measuring the Shannon entropy of the model predictions in different setups.
 
 ## Running SGLD
 
